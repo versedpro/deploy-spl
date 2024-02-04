@@ -14,7 +14,7 @@
 
 2. Get mint account from output.
 
-   - Please get mint account address from associated tx. Don't skip to check the outputs.
+   - Please get mint account address from associated tx of output. Don't skip output check.
 
    - Save whatever you need.
 
