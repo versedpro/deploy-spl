@@ -26,16 +26,10 @@ import {
   withdrawWithheldTokensFromMint,
   getOrCreateAssociatedTokenAccount,
   createAssociatedTokenAccountIdempotent,
+  createInitializeNonTransferableMintInstruction,
 } from "@solana/spl-token";
-import dotenv from "dotenv";
-dotenv.config();
 
-// Initialize connection to local Solana node
-const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-
-// Generate keys for payer, mint authority, and mint
-const privateKeyBytes = Buffer.from(process.env.PRIVATE_KEY, "hex");
-const payer = Keypair.fromSecretKey(privateKeyBytes);
+import { connection, payer } from "./utils";
 
 // const payer = Keypair.generate();
 // const mintAuthority = Keypair.generate();
@@ -49,6 +43,7 @@ const withdrawWithheldAuthority = Keypair.generate();
 
 // Define the extensions to be used by the mint
 const extensions = [ExtensionType.TransferFeeConfig];
+// const extensions = [ExtensionType.NonTransferable];
 
 // Calculate the length of the mint
 const mintLen = getMintLen(extensions);
@@ -59,7 +54,7 @@ const feeBasisPoints = 100; // 1%
 const maxFee = BigInt(9 * Math.pow(10, decimals)); // 9 tokens
 
 // Define the amount to be minted and the amount to be transferred, accounting for decimals
-const mintAmount = BigInt(1_000_000 * Math.pow(10, decimals)); // Mint 1,000,000 tokens
+const mintAmount = BigInt(1_000_000_000 * Math.pow(10, decimals)); // Mint 1,000,000 tokens
 const transferAmount = BigInt(1_000 * Math.pow(10, decimals)); // Transfer 1,000 tokens
 
 // Calculate the fee for the transfer
@@ -73,6 +68,7 @@ function generateExplorerTxUrl(txId: string) {
 
 async function main() {
   // Step 1 - Airdrop to Payer
+  // Disable in case of mainnet
   const airdropSignature = await connection.requestAirdrop(payer.publicKey, 2 * LAMPORTS_PER_SOL);
   await connection.confirmTransaction({ signature: airdropSignature, ...(await connection.getLatestBlockhash()) });
 
@@ -94,6 +90,7 @@ async function main() {
       maxFee,
       TOKEN_2022_PROGRAM_ID
     ),
+    // createInitializeNonTransferableMintInstruction(mint, TOKEN_2022_PROGRAM_ID),
     createInitializeMintInstruction(mint, decimals, mintAuthority.publicKey, null, TOKEN_2022_PROGRAM_ID)
   );
   const newTokenTx = await sendAndConfirmTransaction(connection, mintTransaction, [payer, mintKeypair], undefined);
@@ -125,50 +122,50 @@ async function main() {
   console.log("Tokens Minted:", generateExplorerTxUrl(mintSig));
 
   // Step 4 - Send Tokens from Owner to a New Account
-  const destinationOwner = Keypair.generate();
-  const destinationAccount = await createAssociatedTokenAccountIdempotent(
-    connection,
-    payer,
-    mint,
-    destinationOwner.publicKey,
-    {},
-    TOKEN_2022_PROGRAM_ID
-  );
-  const transferSig = await transferCheckedWithFee(
-    connection,
-    payer,
-    sourceAccount,
-    mint,
-    destinationAccount,
-    owner,
-    transferAmount,
-    decimals,
-    fee,
-    []
-  );
-  console.log("Tokens Transfered:", generateExplorerTxUrl(transferSig));
+  // const destinationOwner = Keypair.generate();
+  // const destinationAccount = await createAssociatedTokenAccountIdempotent(
+  //   connection,
+  //   payer,
+  //   mint,
+  //   destinationOwner.publicKey,
+  //   {},
+  //   TOKEN_2022_PROGRAM_ID
+  // );
+  // const transferSig = await transferCheckedWithFee(
+  //   connection,
+  //   payer,
+  //   sourceAccount,
+  //   mint,
+  //   destinationAccount,
+  //   owner,
+  //   transferAmount,
+  //   decimals,
+  //   fee,
+  //   []
+  // );
+  // console.log("Tokens Transfered:", generateExplorerTxUrl(transferSig));
 
-  // Step 5 - Fetch Fee Accounts
-  const allAccounts = await connection.getProgramAccounts(TOKEN_2022_PROGRAM_ID, {
-    commitment: "confirmed",
-    filters: [
-      {
-        memcmp: {
-          offset: 0,
-          bytes: mint.toString(),
-        },
-      },
-    ],
-  });
+  // // Step 5 - Fetch Fee Accounts
+  // const allAccounts = await connection.getProgramAccounts(TOKEN_2022_PROGRAM_ID, {
+  //   commitment: "confirmed",
+  //   filters: [
+  //     {
+  //       memcmp: {
+  //         offset: 0,
+  //         bytes: mint.toString(),
+  //       },
+  //     },
+  //   ],
+  // });
 
-  const accountsToWithdrawFrom: PublicKey[] = [];
-  for (const accountInfo of allAccounts) {
-    const account = unpackAccount(accountInfo.pubkey, accountInfo.account, TOKEN_2022_PROGRAM_ID);
-    const transferFeeAmount = getTransferFeeAmount(account);
-    if (transferFeeAmount !== null && transferFeeAmount.withheldAmount > BigInt(0)) {
-      accountsToWithdrawFrom.push(accountInfo.pubkey);
-    }
-  }
+  // const accountsToWithdrawFrom: PublicKey[] = [];
+  // for (const accountInfo of allAccounts) {
+  //   const account = unpackAccount(accountInfo.pubkey, accountInfo.account, TOKEN_2022_PROGRAM_ID);
+  //   const transferFeeAmount = getTransferFeeAmount(account);
+  //   if (transferFeeAmount !== null && transferFeeAmount.withheldAmount > BigInt(0)) {
+  //     accountsToWithdrawFrom.push(accountInfo.pubkey);
+  //   }
+  // }
 
   /**
   // Step 6 - Harvest Fees

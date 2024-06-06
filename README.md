@@ -1,8 +1,14 @@
 # Create and Mint process
 
-## Create a SPL token-2022
+SPL and SPL Token-2022 deployment with ease.
 
-1. Create a spl token-2022 using `src/CreateAndMint.ts`
+## Create am SPL
+
+Create an SPL and set metadata at once using `src/CreateMetadata.ts` file. Customize variables on your own.
+
+## Create an SPL token-2022
+
+1. Create an spl token-2022 using `src/CreateAndMint.ts`
 
    - simply run this command
 
@@ -10,7 +16,7 @@
    yarn start
    ```
 
-   - This file creates a token and mint to the owner. You can customize the script with your own.
+   - This file creates a token and mint to the owner. You can customize the script on your own.
 
 2. Get mint account from output.
 
@@ -39,5 +45,7 @@ If you check the mint address, you can see unrecognized token detail on explorer
    - _You can customize metadata from this script._
 
 2. Done
+
+##
 
 Happy deploying!

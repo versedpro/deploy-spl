@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "start": "ts-node src/CreateAndMint.ts",
+    "start": "ts-node src/index.ts",
     "metadata": "ts-node src/CreateMetadata22.ts"
   },
   "dependencies": {

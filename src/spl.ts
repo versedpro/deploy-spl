@@ -1,9 +1,19 @@
-const web3 = require("@solana/web3.js");
-// const deployconfig = require("./deployconfig.json");
+import * as web3 from "@solana/web3.js";
+import * as umiBundler from "@metaplex-foundation/umi-bundle-defaults";
+import * as mpl from "@metaplex-foundation/mpl-token-metadata";
+import * as umiLib from "@metaplex-foundation/umi";
+import { TOKEN_PROGRAM_ID, setAuthority } from "@solana/spl-token";
+import { payer, connection, mint } from "./utils";
 
-const umiBundler = require("@metaplex-foundation/umi-bundle-defaults");
-const mpl = require("@metaplex-foundation/mpl-token-metadata");
-const umiLib = require("@metaplex-foundation/umi");
+const wallet = payer;
+
+const rpc = web3.clusterApiUrl(process.env.PRODUCTION === "true" ? "mainnet-beta" : "devnet");
+
+const metadata = {
+  name: "Solana Gold",
+  symbol: "GOLDSOL",
+  uri: "https://raw.githubusercontent.com/solana-developers/program-examples/new-examples/tokens/tokens/.assets/spl-token.json",
+};
 
 async function createTokenAndMint(rpc, wallet, { metadata, amount, decimals }) {
   const umi = umiBundler.createUmi(rpc).use(mpl.mplTokenMetadata());
@@ -22,7 +32,7 @@ async function createTokenAndMint(rpc, wallet, { metadata, amount, decimals }) {
       uri: metadata.uri,
       sellerFeeBasisPoints: umiLib.percentAmount(0),
       decimals: decimals,
-      amount: amount,
+      amount: BigInt(amount * Math.pow(10, decimals)),
       tokenOwner: umi.identity.publicKey,
       tokenStandard: mpl.TokenStandard.Fungible,
     })
@@ -34,26 +44,11 @@ async function createTokenAndMint(rpc, wallet, { metadata, amount, decimals }) {
   return { tokenAddress: mint.publicKey, mintSecretKey: mint.secretKey };
 }
 
-async function main() {
-  // Example usage
-  const privateKeyHex = ""; // Replace with your actual private key
-
-  const privateKeyBytes = Buffer.from(privateKeyHex, "hex");
-  const keypair = web3.Keypair.fromSecretKey(privateKeyBytes);
-  const wallet = keypair;
-
-  const rpc = web3.clusterApiUrl("devnet");
-
-  const metadata = {
-    name: "Solana Gold",
-    symbol: "GOLDSOL",
-    uri: "https://raw.githubusercontent.com/solana-developers/program-examples/new-examples/tokens/tokens/.assets/spl-token.json",
-  };
-
+async function createAndMintSpl() {
   createTokenAndMint(rpc, wallet, {
     metadata: metadata,
-    amount: 1000000,
-    decimals: 6,
+    amount: 1000000000,
+    decimals: 9,
   })
     .then(({ tokenAddress, mintSecretKey }) => {
       console.log("Token Address:", tokenAddress);
@@ -63,4 +58,22 @@ async function main() {
       console.error("Error creating token:", err);
     });
 }
-main();
+
+export async function revokeFreezeAuthority() {
+  // Revoke the freeze authority
+  const signature = await setAuthority(
+    connection,
+    payer,
+    mint,
+    payer.publicKey,
+    1,
+    null,
+    [],
+    undefined,
+    TOKEN_PROGRAM_ID
+  );
+
+  console.log(signature);
+}
+
+export default createAndMintSpl;

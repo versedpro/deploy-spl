@@ -25,8 +25,7 @@ import {
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import * as bs58 from "bs58";
-import dotenv from "dotenv";
-dotenv.config();
+import { payer, mint, RPC_URL } from "./utils";
 
 const SPL_TOKEN_2022_PROGRAM_ID: PublicKey = publicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
@@ -42,13 +41,9 @@ async function main() {
   // Load wallet key pair from local json file
   // const myKeypair = loadWalletKey("<key>.json"); // Replace with your own json file
 
-  // Load wallet key pair from private key hex of env
-  const privateKeyBytes = Buffer.from(process.env.PRIVATE_KEY, "hex");
-  const keypair = web3.Keypair.fromSecretKey(privateKeyBytes);
+  const keypair = payer;
 
-  const mint = new web3.PublicKey(process.env.SPL_TOKEN_2022_MINT);
-
-  const umi = createUmi("https://api.devnet.solana.com");
+  const umi = createUmi(RPC_URL);
   const signer = createSignerFromKeypair(umi, fromWeb3JsKeypair(keypair));
   umi.use(signerIdentity(signer, true));
 
