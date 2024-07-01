@@ -2,7 +2,7 @@
 
 SPL and SPL Token-2022 deployment with ease.
 
-## Create am SPL
+## Create an SPL
 
 Create an SPL and set metadata at once using `src/CreateMetadata.ts` file. Customize variables on your own.
 
