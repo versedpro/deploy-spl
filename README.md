@@ -1,6 +1,6 @@
 # Create and Mint process
 
-SPL and SPL Token-2022 deployment with ease.
+Create your own coin on Solana easily. This repository provides resources for deploying SPL and SPL Token-2022 tokens.
 
 ## Create an SPL
 
